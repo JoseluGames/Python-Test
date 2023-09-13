@@ -1,7 +1,22 @@
 from flask import Flask, request
 import hashlib
+import sqlite3
 
 app = Flask(__name__)
+
+
+def run_query(query, params=()):
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    result = cursor.fetchone()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    if result:
+        return result[0]
+    else:
+        return None
 
 
 def shorten_url(url):
@@ -14,8 +29,13 @@ def shorten_url(url):
 def shorten():
     url = request.form["url"]
     short_url = shorten_url(url)
+    run_query("INSERT OR IGNORE INTO urls (short_url, url) VALUES (?, ?)", (short_url, url))
     return request.host_url + short_url
 
 
 if __name__ == "__main__":
+    run_query(
+        "CREATE TABLE IF NOT EXISTS urls (short_url TEXT NOT NULL PRIMARY KEY, url TEXT)"
+    )
+    app.debug = True
     app.run()

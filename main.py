@@ -3,6 +3,8 @@ import hashlib
 import validators
 import storage
 import auth
+import analytics
+from threading import Thread
 
 app = Flask(__name__)
 
@@ -15,7 +17,9 @@ def shorten_url(url):
 
 @app.route("/register", methods=["POST"])
 def register():
-    return auth.create_token()
+    token = auth.create_token()
+    Thread(target=analytics.track_register, args=(request.remote_addr, token)).start()
+    return token
 
 
 @app.route("/shorten/<token>", methods=["POST"])
@@ -29,6 +33,9 @@ def shorten(token):
 
     short_url = shorten_url(long_url)
     storage.store_shortened(short_url, long_url)
+    Thread(
+        target=analytics.track_shortening, args=(request.remote_addr, token, short_url)
+    ).start()
     return request.host_url + short_url
 
 
@@ -37,6 +44,9 @@ def redirect_url(short_url):
     long_url = storage.retrieve_url(short_url)
 
     if long_url:
+        Thread(
+            target=analytics.track_redirect, args=(request.remote_addr, short_url)
+        ).start()
         return redirect(long_url)
     else:
         return "URL not found"
@@ -47,5 +57,6 @@ if __name__ == "__main__":
         "CREATE TABLE IF NOT EXISTS urls (short_url TEXT NOT NULL PRIMARY KEY, url TEXT)"
     )
     auth.setup()
+    analytics.setup()
     app.debug = True
     app.run()

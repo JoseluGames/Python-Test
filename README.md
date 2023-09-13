@@ -11,3 +11,8 @@ I decided to run the input URLs through a validation step to make sure they are 
 ### Authentication
 
 For authentication, I decided to follow the suggested route in the task description and make a token based auth, simply make a post requets to /register to generate a token and use it to shorten a URL. This token is saved on a users table and checked before shortening any URLs.
+
+
+### Analytics
+
+For analytics I had to research about threading in Python, after that I decided to simply store the user actions on the database (Register, Shorten and Redirect) for simplicity.

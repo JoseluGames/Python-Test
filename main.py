@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, redirect
 import hashlib
 import sqlite3
 
@@ -31,6 +31,15 @@ def shorten():
     short_url = shorten_url(url)
     run_query("INSERT OR IGNORE INTO urls (short_url, url) VALUES (?, ?)", (short_url, url))
     return request.host_url + short_url
+
+@app.route("/<short_url>")
+def redirect_url(short_url):
+    long_url = run_query("SELECT url FROM urls WHERE short_url = ?", (short_url,))
+
+    if long_url:
+        return redirect(long_url)
+    else:
+        return "URL not found"
 
 
 if __name__ == "__main__":

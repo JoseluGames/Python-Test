@@ -64,5 +64,4 @@ if __name__ == "__main__":
     )
     auth.setup()
     analytics.setup()
-    app.debug = True
     app.run()

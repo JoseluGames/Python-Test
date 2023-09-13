@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, g
 import hashlib
 import validators
 import storage
@@ -50,6 +50,12 @@ def redirect_url(short_url):
         return redirect(long_url)
     else:
         return "URL not found"
+
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, "db"):
+        g.db.close()
 
 
 if __name__ == "__main__":

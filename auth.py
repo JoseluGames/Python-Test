@@ -10,12 +10,12 @@ def setup():
 
 def create_token():
     token = secrets.token_urlsafe(4)
-    storage.run_query("INSERT OR IGNORE INTO users (token) VALUES (?)", (token,))
+    storage.run_pooled_query("INSERT OR IGNORE INTO users (token) VALUES (?)", (token,))
     return token
 
 
 def validate_token(token):
     return (
-        storage.run_query("SELECT token FROM users WHERE token = ?", (token,))
+        storage.run_pooled_query("SELECT token FROM users WHERE token = ?", (token,))
         is not None
     )

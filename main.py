@@ -1,24 +1,10 @@
 from flask import Flask, request, redirect
 import hashlib
-import sqlite3
 import validators
-import secrets
+import storage
+import auth
 
 app = Flask(__name__)
-
-
-def run_query(query, params=()):
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
-    cursor.execute(query, params)
-    result = cursor.fetchone()
-    conn.commit()
-    cursor.close()
-    conn.close()
-    if result:
-        return result[0]
-    else:
-        return None
 
 
 def shorten_url(url):
@@ -29,14 +15,12 @@ def shorten_url(url):
 
 @app.route("/register", methods=["POST"])
 def register():
-    token = secrets.token_urlsafe(4)
-    run_query("INSERT OR IGNORE INTO users (token) VALUES (?)", (token,))
-    return token
+    return auth.create_token()
 
 
 @app.route("/shorten/<token>", methods=["POST"])
 def shorten(token):
-    if run_query("SELECT token FROM users WHERE token = ?", (token,)) is None:
+    if auth.validate_token(token) is not True:
         return "Invalid token"
 
     long_url = request.form["url"]
@@ -44,16 +28,13 @@ def shorten(token):
         return "Invalid URL"
 
     short_url = shorten_url(long_url)
-    run_query(
-        "INSERT OR IGNORE INTO urls (short_url, url) VALUES (?, ?)",
-        (short_url, long_url),
-    )
+    storage.store_shortened(short_url, long_url)
     return request.host_url + short_url
 
 
 @app.route("/<short_url>")
 def redirect_url(short_url):
-    long_url = run_query("SELECT url FROM urls WHERE short_url = ?", (short_url,))
+    long_url = storage.retrieve_url(short_url)
 
     if long_url:
         return redirect(long_url)
@@ -62,9 +43,9 @@ def redirect_url(short_url):
 
 
 if __name__ == "__main__":
-    run_query(
+    storage.run_query(
         "CREATE TABLE IF NOT EXISTS urls (short_url TEXT NOT NULL PRIMARY KEY, url TEXT)"
     )
-    run_query("CREATE TABLE IF NOT EXISTS users (token TEXT NOT NULL PRIMARY KEY)")
+    auth.setup()
     app.debug = True
     app.run()

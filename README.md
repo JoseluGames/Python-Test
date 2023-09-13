@@ -3,3 +3,5 @@ First of all, I took some time to refresh on my Python knowledge and researched 
 For shortening the URLs I decided to simply get a hash of the url and use part of it (The first 8 hex chars should be fine). This makes it pretty simple to generate those short urls but means that I have to store the short_url -> url relation on a database. Thinking of ways to simply encode the long url into a shorter version in a way that can be decoded would reduce costs as it would remove the need for a database, but for the provided example the hash approach should be enough.
 
 For the database I decided to go with SQLite for the sake of simplicity.
+
+I decided to run the input URLs through a validation step to make sure they are valid URLs. This simplifies the redirection step.

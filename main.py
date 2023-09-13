@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect
 import hashlib
 import sqlite3
+import validators
 
 app = Flask(__name__)
 
@@ -27,10 +28,16 @@ def shorten_url(url):
 
 @app.route("/shorten", methods=["POST"])
 def shorten():
-    url = request.form["url"]
-    short_url = shorten_url(url)
-    run_query("INSERT OR IGNORE INTO urls (short_url, url) VALUES (?, ?)", (short_url, url))
+    long_url = request.form["url"]
+    if validators.url(long_url) is not True:
+        return "Invalid URL"
+
+    short_url = shorten_url(long_url)
+    run_query(
+        "INSERT OR IGNORE INTO urls (short_url, url) VALUES (?, ?)", (short_url, long_url)
+    )
     return request.host_url + short_url
+
 
 @app.route("/<short_url>")
 def redirect_url(short_url):
